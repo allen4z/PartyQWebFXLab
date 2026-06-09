@@ -18,8 +18,8 @@ export interface MidiEngineCallbacks {
   onStateChange?: () => void
 }
 
-/** Detect PartyQ / PartyKeys by device name. Competitor names are ignored. */
-function isPartyQName(name: string): boolean {
+/** Detect PartyKeys by device name. Competitor names are ignored. */
+function isPartyKeysName(name: string): boolean {
   return /party\s*(q|key)/i.test(name)
 }
 
@@ -29,7 +29,7 @@ function toDevice(port: MIDIInput | MIDIOutput): MidiDevice {
     id: port.id,
     name,
     manufacturer: port.manufacturer ?? '',
-    isPartyQ: isPartyQName(name),
+    isPartyKeys: isPartyKeysName(name),
   }
 }
 
@@ -63,12 +63,12 @@ export class MidiEngine {
     this.status = 'requesting'
     this.callbacks.onStateChange?.()
     try {
-      // sysex:true is required for PartyQ LED output.
+      // sysex:true is required for PartyKeys LED output.
       this.access = await navigator.requestMIDIAccess({ sysex: true })
       this.status = 'ready'
       this.access.onstatechange = () => this.refresh()
       this.refresh()
-      // Auto-select the PartyQ device if present.
+      // Auto-select the PartyKeys device if present.
       this.autoSelect()
       return this.status
     } catch (err) {
@@ -102,11 +102,11 @@ export class MidiEngine {
 
   private autoSelect() {
     if (!this.selectedInputId) {
-      const pq = this.inputs.find((d) => d.isPartyQ) ?? this.inputs[0]
+      const pq = this.inputs.find((d) => d.isPartyKeys) ?? this.inputs[0]
       if (pq) this.selectInput(pq.id)
     }
     if (!this.selectedOutputId) {
-      const pq = this.outputs.find((d) => d.isPartyQ) ?? this.outputs[0]
+      const pq = this.outputs.find((d) => d.isPartyKeys) ?? this.outputs[0]
       if (pq) this.selectOutput(pq.id)
     }
   }

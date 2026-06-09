@@ -1,13 +1,13 @@
 // ---------------------------------------------------------------------------
 // Music theory helpers: note names, scales, chord detection.
-// PartyQ / PartyKeys 36-key range = MIDI 48..83 (C3..B5).
+// PartyKeys 36-key range = MIDI 48..83 (C3..B5).
 // ---------------------------------------------------------------------------
 
 import type { ChordResult, ScaleDef } from './types'
 
-export const PARTYQ_LOW = 48 // C3
-export const PARTYQ_HIGH = 83 // B5
-export const PARTYQ_KEY_COUNT = PARTYQ_HIGH - PARTYQ_LOW + 1 // 36
+export const PARTYKEYS_LOW = 48 // C3
+export const PARTYKEYS_HIGH = 83 // B5
+export const PARTYKEYS_KEY_COUNT = PARTYKEYS_HIGH - PARTYKEYS_LOW + 1 // 36
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
@@ -31,15 +31,15 @@ export function noteName(midi: number): string {
   return `${pitchClassName(midi)}${octaveOf(midi)}`
 }
 
-/** Map a PartyQ key index (0..35) to a MIDI note. */
+/** Map a PartyKeys key index (0..35) to a MIDI note. */
 export function keyIndexToMidi(index: number): number {
-  return PARTYQ_LOW + index
+  return PARTYKEYS_LOW + index
 }
 
-/** Map a MIDI note to a PartyQ key index, or -1 if out of range. */
+/** Map a MIDI note to a PartyKeys key index, or -1 if out of range. */
 export function midiToKeyIndex(midi: number): number {
-  if (midi < PARTYQ_LOW || midi > PARTYQ_HIGH) return -1
-  return midi - PARTYQ_LOW
+  if (midi < PARTYKEYS_LOW || midi > PARTYKEYS_HIGH) return -1
+  return midi - PARTYKEYS_LOW
 }
 
 export const SCALES: ScaleDef[] = [

@@ -1,8 +1,8 @@
 import { useStore } from '../../store'
 import type { LedColorMode, LedMode } from '../../lib/types'
 import {
-  PARTYQ_HIGH,
-  PARTYQ_LOW,
+  PARTYKEYS_HIGH,
+  PARTYKEYS_LOW,
   pitchClassName,
   scalePitchClasses,
 } from '../../lib/music'
@@ -58,7 +58,7 @@ function LedStrip() {
     Math.min(1, 0.35 + (fx.reverb.enabled ? fx.reverb.wet * 0.5 : 0) + (fx.delay.enabled ? fx.delay.wet * 0.4 : 0))
 
   const cells = []
-  for (let midi = PARTYQ_LOW; midi <= PARTYQ_HIGH; midi++) {
+  for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
     const pc = ((midi % 12) + 12) % 12
     const held = midi in activeNotes
     let intensity = 0
@@ -199,7 +199,7 @@ export function LedPanel() {
           LED output uses <span className="font-mono text-white/60">sendLedMessage()</span> →
           SysEx on the selected MIDI output. Swap the protocol in{' '}
           <span className="font-mono text-white/60">lib/led/sendLedMessage.ts</span> when the
-          exact PartyQ spec is confirmed.
+          exact PartyKeys spec is confirmed.
         </p>
       </div>
     </Card>

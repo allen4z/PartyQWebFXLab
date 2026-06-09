@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Shared domain types for PartyQ Web FX Lab
+// Shared domain types for PartyKeys Web FX Lab
 // ---------------------------------------------------------------------------
 
 /** A MIDI input or output device, normalized from the Web MIDI API. */
@@ -7,8 +7,8 @@ export interface MidiDevice {
   id: string
   name: string
   manufacturer: string
-  /** True if the device name matches the PartyQ / PartyKeys hardware. */
-  isPartyQ: boolean
+  /** True if the device name matches the PartyKeys hardware. */
+  isPartyKeys: boolean
 }
 
 export type MidiConnectionStatus =

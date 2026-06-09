@@ -1,5 +1,5 @@
 import type { LedColorMode, Rgb } from '../types'
-import { midiToKeyIndex, PARTYQ_KEY_COUNT } from '../music'
+import { midiToKeyIndex, PARTYKEYS_KEY_COUNT } from '../music'
 
 // ---------------------------------------------------------------------------
 // Color helpers for LED output + on-screen key glow. Pure functions.
@@ -45,7 +45,7 @@ export function hsvToRgb(h: number, s: number, v: number): Rgb {
  */
 export function colorForKey(mode: LedColorMode, midi: number): Rgb {
   const idx = Math.max(0, midiToKeyIndex(midi))
-  const t = idx / (PARTYQ_KEY_COUNT - 1) // 0..1 across the keybed
+  const t = idx / (PARTYKEYS_KEY_COUNT - 1) // 0..1 across the keybed
   switch (mode) {
     case 'blue':
       return BLUE

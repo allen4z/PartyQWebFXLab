@@ -21,8 +21,8 @@ import { colorForKey } from './lib/led/colors'
 import {
   detectChord,
   keyIndexToMidi,
-  PARTYQ_HIGH,
-  PARTYQ_LOW,
+  PARTYKEYS_HIGH,
+  PARTYKEYS_LOW,
   scalePitchClasses,
 } from './lib/music'
 import { DEFAULT_PRESET_ID, getPreset } from './lib/presets/soundPresets'
@@ -106,7 +106,7 @@ export const useStore = create<AppState>((set, get) => {
     if (ledMode !== 'scale') return
     allLedsOff(out)
     const pcs = scalePitchClasses(scaleRoot, scaleId)
-    for (let midi = PARTYQ_LOW; midi <= PARTYQ_HIGH; midi++) {
+    for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
       if (pcs.has(((midi % 12) + 12) % 12)) {
         const isRoot = ((midi % 12) + 12) % 12 === scaleRoot
         sendLedMessage(out, midi, colorForKey(ledColor, midi), ledBrightness * (isRoot ? 1 : 0.45))
@@ -178,7 +178,7 @@ export const useStore = create<AppState>((set, get) => {
     allLedsOff(out)
     const notes = Object.keys(activeNotes).map(Number)
     const pcs = new Set(notes.map((n) => ((n % 12) + 12) % 12))
-    for (let midi = PARTYQ_LOW; midi <= PARTYQ_HIGH; midi++) {
+    for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
       if (pcs.has(((midi % 12) + 12) % 12)) {
         sendLedMessage(out, midi, colorForKey(ledColor, midi), ledBrightness)
       }

@@ -1,6 +1,6 @@
-# PartyQ Web FX Lab
+# PartyKeys Web FX Lab
 
-A premium, browser-based performance interface for the **PartyQ / PartyKeys** 36-key MIDI
+A premium, browser-based performance interface for the **PartyKeys** 36-key MIDI
 keyboard. Press keys to trigger high-quality Tone.js instruments, run them through a
 real-time DSP effects rack, see live visual feedback, and drive the keyboard's LEDs by
 note / scale / chord / FX state.
@@ -16,11 +16,11 @@ npm run build    # type-check + production bundle into dist/
 ```
 
 Click **Enable Audio** (browsers require a user gesture before audio), then **Connect
-PartyQ**. No hardware? Play with the mouse, touch, or the **A–L** computer keys.
+PartyKeys**. No hardware? Play with the mouse, touch, or the **A–L** computer keys.
 
 ## Features
 
-- **Device Connection** — Web MIDI access (with SysEx), auto-detects PartyQ, separate
+- **Device Connection** — Web MIDI access (with SysEx), auto-detects PartyKeys, separate
   input/output selection, live connection status, safe fallbacks when MIDI is unavailable.
 - **Performance Keyboard** — 36 visual keys (C3–B5), glowing on press, mouse/touch
   preview with glissando, animated particle bursts, live note / octave / velocity / chord
@@ -44,7 +44,7 @@ src/
   lib/
     midi/      MidiEngine.ts        Web MIDI wrapper (note routing, device list, output)
     audio/     AudioEngine.ts       Tone.js synth + DSP FX chain
-    led/       sendLedMessage.ts    >>> PartyQ LED protocol lives here <<<
+    led/       sendLedMessage.ts    >>> PartyKeys LED protocol lives here <<<
                colors.ts            palette / gradient / rainbow helpers
     presets/   soundPresets.ts      12 instruments
                fxPresets.ts         8 FX modes + defaults
@@ -55,7 +55,7 @@ src/
   components/  DevicePanel, Keyboard, SoundPanel, FxRack, LedPanel, AiSoundPrompt, ui/
 ```
 
-## ⚡ Plugging in the real PartyQ LED protocol
+## ⚡ Plugging in the real PartyKeys LED protocol
 
 All LED output flows through **one file**: [`src/lib/led/sendLedMessage.ts`](src/lib/led/sendLedMessage.ts).
 
@@ -76,5 +76,5 @@ latency comment when syncing LEDs tightly to audio.
 
 Vite is auto-detected; leave **Root Directory** empty. `vercel.json` adds SPA rewrites.
 ```bash
-git add . && git commit -m "PartyQ Web FX Lab" && git push
+git add . && git commit -m "PartyKeys Web FX Lab" && git push
 ```

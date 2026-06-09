@@ -2,12 +2,12 @@ import type { Rgb } from '../types'
 import { scaleBrightness } from './colors'
 
 // ===========================================================================
-//  PartyQ / PartyKeys LED OUTPUT  —  EDIT THIS FILE TO MATCH REAL HARDWARE
+//  PartyKeys LED OUTPUT  —  EDIT THIS FILE TO MATCH REAL HARDWARE
 // ===========================================================================
 //
 // `sendLedMessage` is the single place that turns an (note, color, brightness,
 // duration) request into bytes on the MIDI output. Everything else in the app
-// calls this and stays protocol-agnostic. When the *exact* PartyQ LED protocol
+// calls this and stays protocol-agnostic. When the *exact* PartyKeys LED protocol
 // is confirmed, you only need to change `buildLedSysEx` below.
 //
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ import { scaleBrightness } from './colors'
 
 export type LedProtocol = '0x71' | '0x15'
 
-/** Switch here when the connected PartyQ firmware is confirmed. */
+/** Switch here when the connected PartyKeys firmware is confirmed. */
 export const LED_PROTOCOL: LedProtocol = '0x71'
 
 const VENDOR_HEADER = [0xf0, 0x05, 0x30, 0x7f, 0x7f, 0x20, 0x00]
@@ -77,7 +77,7 @@ function to7bitPair(v: number): [number, number] {
 
 /**
  * Build the SysEx byte array to set ONE key to a color, for the active protocol.
- * `keyIndex` is 0..35 (PartyQ key index); `midiNote` is the true note 48..83.
+ * `keyIndex` is 0..35 (PartyKeys key index); `midiNote` is the true note 48..83.
  */
 function buildLedSysEx(midiNote: number, keyIndex: number, color: Rgb): number[] {
   if (LED_PROTOCOL === '0x15') {
@@ -119,11 +119,11 @@ export function buildLedAllOff(): number[] {
  * Send a single LED command to the keyboard.
  *
  * @param output     selected MIDI output (null = no device; logs instead)
- * @param note       real MIDI note number (48..83 for PartyQ)
+ * @param note       real MIDI note number (48..83 for PartyKeys)
  * @param color      desired RGB (will be quantized for the 0x71 protocol)
  * @param brightness 0..1 multiplier applied to the color
  * @param duration   optional auto-off in ms (used by Note Light / Trail modes)
- * @param keyIndex   PartyQ key index 0..35 (needed by the 0x15 protocol)
+ * @param keyIndex   PartyKeys key index 0..35 (needed by the 0x15 protocol)
  *
  * NOTE: hardware LED latency is ~200ms — when tightly syncing to audio, send
  * the LED on the beat and delay audio + visuals by the same constant.

@@ -24,14 +24,14 @@ function Header() {
           className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-gradient text-xl font-black text-white shadow-glow"
           aria-hidden
         >
-          Q
+          P
         </div>
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-            PartyQ <span className="text-gradient">Web FX Lab</span>
+            PartyKeys <span className="text-gradient">Web FX Lab</span>
           </h1>
           <p className="text-xs text-white/45">
-            Performance · DSP · LED control center for PartyQ / PartyKeys
+            Performance · DSP · LED control center for PartyKeys
           </p>
         </div>
       </div>
@@ -73,20 +73,20 @@ function AudioGate() {
           className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-brand-gradient text-3xl font-black text-white shadow-glow animate-float"
           aria-hidden
         >
-          Q
+          P
         </div>
         <h2 className="mb-2 text-2xl font-extrabold">
-          PartyQ <span className="text-gradient">Web FX Lab</span>
+          PartyKeys <span className="text-gradient">Web FX Lab</span>
         </h2>
         <p className="mb-6 text-sm text-white/55">
-          A browser-based performance rig for your PartyQ keyboard — high-quality synths,
+          A browser-based performance rig for your PartyKeys keyboard — high-quality synths,
           real-time DSP effects, and live LED control. Audio starts on your command.
         </p>
         <button type="button" onClick={startAudio} className="btn-brand mx-auto text-base">
           ▶ Enable Audio &amp; Enter
         </button>
         <p className="mt-4 text-[11px] text-white/35">
-          Then click <span className="font-semibold text-white/60">Connect PartyQ</span> to bind
+          Then click <span className="font-semibold text-white/60">Connect PartyKeys</span> to bind
           your hardware — or play with mouse / QWERTY keys right away.
         </p>
       </div>
@@ -153,7 +153,7 @@ export default function App() {
         </div>
 
         <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/30">
-          <span>PartyQ Web FX Lab · React · Tone.js · Web MIDI · no backend</span>
+          <span>PartyKeys Web FX Lab · React · Tone.js · Web MIDI · no backend</span>
           <span className="font-mono">QWERTY: A–L = play · ⌘+Enter in AI box</span>
         </footer>
       </div>

@@ -31,7 +31,7 @@ function DeviceSelect({
       <option value="">{devices.length ? placeholder : 'No devices'}</option>
       {devices.map((d) => (
         <option key={d.id} value={d.id}>
-          {d.isPartyQ ? '★ ' : ''}
+          {d.isPartyKeys ? '★ ' : ''}
           {d.name}
         </option>
       ))}
@@ -51,7 +51,7 @@ export function DevicePanel() {
 
   const meta = STATUS_META[status] ?? STATUS_META.idle
   const partyConnected =
-    inputs.some((d) => d.isPartyQ) || outputs.some((d) => d.isPartyQ)
+    inputs.some((d) => d.isPartyKeys) || outputs.some((d) => d.isPartyKeys)
 
   return (
     <Card
@@ -76,8 +76,12 @@ export function DevicePanel() {
           className="btn-brand w-full"
         >
           <span>◈</span>
-          {status === 'ready' ? 'Reconnect PartyQ' : 'Connect PartyQ'}
+          {status === 'ready' ? 'Reconnect PartyKeys' : 'Connect PartyKeys'}
         </button>
+
+        <p className="-mt-1.5 text-center text-[11px] text-white/40">
+          Any MIDI keyboard works
+        </p>
 
         {status === 'unsupported' && (
           <p className="rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-xs text-red-200/80">
@@ -88,7 +92,7 @@ export function DevicePanel() {
 
         {status === 'ready' && partyConnected && (
           <p className="rounded-lg border border-emerald-400/20 bg-emerald-400/5 p-2.5 text-xs text-emerald-200/80">
-            ★ PartyQ hardware detected and selected automatically.
+            ★ PartyKeys hardware detected and selected automatically.
           </p>
         )}
 

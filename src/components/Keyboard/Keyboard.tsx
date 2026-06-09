@@ -4,8 +4,8 @@ import {
   isBlackKey,
   noteName,
   octaveOf,
-  PARTYQ_HIGH,
-  PARTYQ_LOW,
+  PARTYKEYS_HIGH,
+  PARTYKEYS_LOW,
   pitchClassName,
   scalePitchClasses,
 } from '../../lib/music'
@@ -27,7 +27,7 @@ const BLACK_W = WHITE_W * 0.62
 function buildLayout(): KeyLayout[] {
   const layout: KeyLayout[] = []
   let whiteCount = 0
-  for (let midi = PARTYQ_LOW; midi <= PARTYQ_HIGH; midi++) {
+  for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
     if (isBlackKey(midi)) {
       const left = whiteCount * WHITE_W - BLACK_W / 2
       layout.push({
