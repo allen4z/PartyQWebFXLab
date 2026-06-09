@@ -6,6 +6,7 @@ import { SoundPanel } from './components/SoundPanel/SoundPanel'
 import { FxRack } from './components/FxRack/FxRack'
 import { LedPanel } from './components/LedPanel/LedPanel'
 import { AiSoundPrompt } from './components/AiSoundPrompt/AiSoundPrompt'
+import { Logo } from './components/ui/Logo'
 
 // QWERTY -> MIDI note (starting at C4 = 60) for keyboard-less demoing.
 const KEY_MAP: Record<string, number> = {
@@ -20,12 +21,7 @@ function Header() {
   return (
     <header className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <div className="flex items-center gap-3">
-        <div
-          className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-gradient text-xl font-black text-white shadow-glow"
-          aria-hidden
-        >
-          P
-        </div>
+        <Logo size={44} />
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
             PartyKeys <span className="text-gradient">Web FX Lab</span>
@@ -69,12 +65,7 @@ function AudioGate() {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink-900/70 p-6 backdrop-blur-md">
       <div className="glass-strong max-w-md p-8 text-center">
-        <div
-          className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-brand-gradient text-3xl font-black text-white shadow-glow animate-float"
-          aria-hidden
-        >
-          P
-        </div>
+        <Logo size={64} rounded="rounded-3xl" className="mx-auto mb-5 animate-float" />
         <h2 className="mb-2 text-2xl font-extrabold">
           PartyKeys <span className="text-gradient">Web FX Lab</span>
         </h2>
