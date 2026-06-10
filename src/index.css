@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
+/* System font stack only — zero network dependency, fully offline.
+   On iOS this resolves to SF Pro (premium native look). */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,7 +23,7 @@
       radial-gradient(900px 800px at 60% 120%, rgba(249, 115, 22, 0.14), transparent 60%),
       #070710;
     color: #e7e7f3;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 

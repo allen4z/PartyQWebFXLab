@@ -351,6 +351,11 @@ export const useStore = create<AppState>((set, get) => {
     },
 
     noteOn: (note, velocity, source) => {
+      // 1) AUDIO FIRST — lowest latency. Fire the synth before any React state
+      //    work so sound is never gated on reconciliation/visuals.
+      if (get().audioStarted) audioEngine.triggerAttack(note, velocity)
+
+      // 2) State + visuals (keyboard glow, particles, chord readout).
       const active: Record<number, ActiveNote> = {
         ...get().activeNotes,
         [note]: { note, velocity, source },
@@ -359,20 +364,20 @@ export const useStore = create<AppState>((set, get) => {
       const chord = detectChord(notes)
       set({ activeNotes: active, lastNote: { note, velocity }, chord })
 
-      if (get().audioStarted) audioEngine.triggerAttack(note, velocity)
-
+      // 3) LED (fire-and-forget; hardware LED latency ~200ms, never blocks audio).
       ledNoteOn(note)
       if (get().ledMode === 'chord') renderChordLeds()
     },
 
     noteOff: (note) => {
+      // Audio release first, same rationale as noteOn.
+      if (get().audioStarted) audioEngine.triggerRelease(note)
+
       const active = { ...get().activeNotes }
       delete active[note]
       const notes = Object.keys(active).map(Number)
       const chord = detectChord(notes)
       set({ activeNotes: active, chord })
-
-      if (get().audioStarted) audioEngine.triggerRelease(note)
 
       ledNoteOff(note)
       if (get().ledMode === 'chord') renderChordLeds()

@@ -118,3 +118,31 @@ npm run build && npx cap sync ios     # 再在 Xcode Run
 | `ios/App/App/Info.plist` | 蓝牙用途说明(NSBluetooth*UsageDescription) |
 
 > 注:`ios/` 已纳入 git(`Pods/`、生成的 `public/`、`capacitor.config.json` 由 `ios/.gitignore` 忽略,需 `cap sync` 重新生成)。
+
+---
+
+## 6. 三个关键决策:延时 / 音质 / 上线模式
+
+### ① 延时(越低越好)
+弹奏到出声的链路:`CoreMIDI(原生) → Capacitor 事件 → store.noteOn → Tone.js → WebAudio 输出`。
+做的优化:
+- **音频优先触发**:`store.noteOn` 里**先**调 `audioEngine.triggerAttack`,再做 React 状态更新和 LED——出声不被界面渲染拖慢。
+- **交互式低延时音频上下文**:`new Tone.Context({ latencyHint: 'interactive' })`,`lookAhead = 0`(弹下即响),`updateInterval = 0.02`(包络平滑)。
+- **原生音频会话调低缓冲**:`AppDelegate` 里 `setPreferredIOBufferDuration(0.005)`(~5ms)+ `48kHz`,把 WKWebView 音频的输出缓冲压到最小。
+- **LED 不挡音频**:点灯是 fire-and-forget,硬件本身有 ~200ms 延时,绝不阻塞声音。
+
+> 实际端到端延时主要由 WebAudio 输出缓冲决定,以上把它压到“随手弹随手响”的可用范围。架构保持简单稳定(没有为了极限延时去重写原生合成器)。
+
+### ② 音质(合理架构下最好)
+- **48kHz 全带宽**:WebAudio 上下文与原生会话都设 48kHz,避免重采样损耗。
+- **干净信号链**:合成器 → DSP → 限制器(-1dB)防削波。
+- **力度灵敏**:MIDI velocity 传入,音量随触键力度变化。
+- **未来升级位**:如要“录音室级”音色,把旗舰预设换成 `Tone.Sampler` + **本地打包的采样文件**即可(完全离线,不引入服务器)。架构已支持,只是本期用合成音色以控制体积。
+
+### ③ 上线 / 运维模式(零负担,单机版)
+- **纯单机、零后端、零登录、零付费 API**:没有账号、没有邮箱、没有服务器,**不收集任何数据**。
+- **完全离线**:已移除 Google Fonts 等所有外部网络依赖,改用**系统字体**(iOS = SF Pro)。**断网/飞行模式照常用**,蓝牙开着就能连键盘——“连 wifi 才用”都不需要。
+- **不走 App Store**:用免费 Apple ID 直接 Xcode 装到自己手机(sideload),**不提交审核**,自然没有审核/上架/合规负担。要长期用就续签(免费证书 7 天)或用 99 刀开发者账号做 Ad Hoc,**仍无需上架**。
+- **没有触发审核难度的能力**:只用了蓝牙(标准用途说明)、音频播放;无推送、无后台模式、无账号、无 IAP、无特殊 entitlement。
+- **稳定优先的技术选型**:React 18 / Vite 5 / Capacitor 6 / Tone.js 15 —— 全是成熟稳定版本,非尝鲜版;`package-lock.json` 锁定确切版本,构建可复现、不会因依赖乱更新而炸。
+- **唯一的“维护”动作**:改了代码后 `npm run build && npx cap sync ios` 再在 Xcode Run;不改就一直能用。

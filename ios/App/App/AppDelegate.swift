@@ -8,11 +8,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Route Web Audio (Tone.js) through the playback category so it stays
-        // audible even with the hardware mute switch on.
+        // Audio session tuned for LOW LATENCY live playing:
+        //  • .playback → audible even with the mute switch on
+        //  • small IO buffer (~5ms) → minimal output latency for WKWebView audio
+        //  • 48 kHz → match the Web Audio context for best quality, no resampling
+        let session = AVAudioSession.sharedInstance()
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(true)
+            try session.setCategory(.playback, options: [.mixWithOthers])
+            try session.setPreferredSampleRate(48_000)
+            try session.setPreferredIOBufferDuration(0.005)
+            try session.setActive(true)
         } catch {
             print("[Audio] session setup failed: \(error)")
         }
