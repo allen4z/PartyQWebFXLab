@@ -48,6 +48,9 @@ export function DevicePanel() {
   const connectMidi = useStore((s) => s.connectMidi)
   const selectInput = useStore((s) => s.selectInput)
   const selectOutput = useStore((s) => s.selectOutput)
+  const isNativeApp = useStore((s) => s.isNativeApp)
+  const canPairBluetooth = useStore((s) => s.canPairBluetooth)
+  const pairBluetooth = useStore((s) => s.pairBluetooth)
 
   const meta = STATUS_META[status] ?? STATUS_META.idle
   const partyConnected =
@@ -83,7 +86,19 @@ export function DevicePanel() {
           Any MIDI keyboard works
         </p>
 
-        {status === 'unsupported' && (
+        {/* Native iOS app: Bluetooth-MIDI pairing sheet (CoreMIDI). */}
+        {canPairBluetooth && (
+          <button
+            type="button"
+            onClick={pairBluetooth}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-sky-400/10 px-4 py-2.5 text-sm font-semibold text-sky-200 transition hover:bg-sky-400/20"
+          >
+            <span></span> Pair via Bluetooth
+          </button>
+        )}
+
+        {/* Web only: explain the Web MIDI limitation. */}
+        {status === 'unsupported' && !isNativeApp && (
           <p className="rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-xs text-red-200/80">
             This browser doesn't expose the Web MIDI API. Use Chrome (desktop) for
             hardware control — the on-screen keyboard below still works.

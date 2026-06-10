@@ -45,6 +45,10 @@ interface AppState {
   outputs: MidiDevice[]
   selectedInputId: string | null
   selectedOutputId: string | null
+  /** Running inside the native iOS/Android shell (vs a browser). */
+  isNativeApp: boolean
+  /** Native build can present the system Bluetooth-MIDI pairing sheet. */
+  canPairBluetooth: boolean
 
   // performance
   activeNotes: Record<number, ActiveNote>
@@ -75,6 +79,7 @@ interface AppState {
   startAudio: () => Promise<void>
   setMasterVolume: (v: number) => void
   connectMidi: () => Promise<void>
+  pairBluetooth: () => Promise<void>
   selectInput: (id: string | null) => void
   selectOutput: (id: string | null) => void
   setPreset: (id: string) => void
@@ -95,21 +100,20 @@ interface AppState {
 
 export const useStore = create<AppState>((set, get) => {
   // ---- internal helpers (not part of public state) ----
-
-  const output = () => midiEngine.getSelectedOutput()
+  // LED output is routed through midiEngine.send() inside the led module, so
+  // these helpers no longer need a MIDIOutput handle.
 
   /** Light scale tones (dim) across the whole keybed for Scale Guide mode. */
   const renderScaleLeds = () => {
     const { ledEnabled, ledMode, scaleRoot, scaleId, ledColor, ledBrightness } = get()
-    const out = output()
     if (!ledEnabled) return
     if (ledMode !== 'scale') return
-    allLedsOff(out)
+    allLedsOff()
     const pcs = scalePitchClasses(scaleRoot, scaleId)
     for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
       if (pcs.has(((midi % 12) + 12) % 12)) {
         const isRoot = ((midi % 12) + 12) % 12 === scaleRoot
-        sendLedMessage(out, midi, colorForKey(ledColor, midi), ledBrightness * (isRoot ? 1 : 0.45))
+        sendLedMessage(midi, colorForKey(ledColor, midi), ledBrightness * (isRoot ? 1 : 0.45))
       }
     }
   }
@@ -127,25 +131,24 @@ export const useStore = create<AppState>((set, get) => {
   const ledNoteOn = (note: number) => {
     const { ledEnabled, ledMode, ledColor, ledBrightness } = get()
     if (!ledEnabled) return
-    const out = output()
     const rgb = colorForKey(ledColor, note)
     switch (ledMode) {
       case 'note':
-        sendLedMessage(out, note, rgb, ledBrightness)
+        sendLedMessage(note, rgb, ledBrightness)
         break
       case 'trail':
         // fading trail: auto-off after a short duration handled by sendLedMessage
-        sendLedMessage(out, note, rgb, ledBrightness, 800)
+        sendLedMessage(note, rgb, ledBrightness, 800)
         break
       case 'reactive':
-        sendLedMessage(out, note, rgb, reactiveBrightness())
+        sendLedMessage(note, rgb, reactiveBrightness())
         break
       case 'chord':
         // chord tones are repainted from the full active set below
         break
       case 'scale':
         // brighten the pressed key on top of the static scale
-        sendLedMessage(out, note, rgb, Math.min(1, ledBrightness + 0.3))
+        sendLedMessage(note, rgb, Math.min(1, ledBrightness + 0.3))
         break
     }
   }
@@ -153,7 +156,6 @@ export const useStore = create<AppState>((set, get) => {
   const ledNoteOff = (note: number) => {
     const { ledEnabled, ledMode } = get()
     if (!ledEnabled) return
-    const out = output()
     if (ledMode === 'trail') return // fades on its own
     if (ledMode === 'scale') {
       // restore the dim scale color if this note is in scale, else off
@@ -161,26 +163,25 @@ export const useStore = create<AppState>((set, get) => {
       const inScale = scalePitchClasses(scaleRoot, scaleId).has(((note % 12) + 12) % 12)
       if (inScale) {
         const isRoot = ((note % 12) + 12) % 12 === scaleRoot
-        sendLedMessage(out, note, colorForKey(ledColor, note), ledBrightness * (isRoot ? 1 : 0.45))
+        sendLedMessage(note, colorForKey(ledColor, note), ledBrightness * (isRoot ? 1 : 0.45))
       } else {
-        ledKeyOff(out, note)
+        ledKeyOff(note)
       }
       return
     }
-    ledKeyOff(out, note)
+    ledKeyOff(note)
   }
 
   /** Repaint chord-tone LEDs from the full active-note set. */
   const renderChordLeds = () => {
     const { ledEnabled, ledMode, ledColor, ledBrightness, activeNotes } = get()
     if (!ledEnabled || ledMode !== 'chord') return
-    const out = output()
-    allLedsOff(out)
+    allLedsOff()
     const notes = Object.keys(activeNotes).map(Number)
     const pcs = new Set(notes.map((n) => ((n % 12) + 12) % 12))
     for (let midi = PARTYKEYS_LOW; midi <= PARTYKEYS_HIGH; midi++) {
       if (pcs.has(((midi % 12) + 12) % 12)) {
-        sendLedMessage(out, midi, colorForKey(ledColor, midi), ledBrightness)
+        sendLedMessage(midi, colorForKey(ledColor, midi), ledBrightness)
       }
     }
   }
@@ -194,6 +195,8 @@ export const useStore = create<AppState>((set, get) => {
     outputs: [],
     selectedInputId: null,
     selectedOutputId: null,
+    isNativeApp: midiEngine.kind === 'native',
+    canPairBluetooth: midiEngine.canPairBluetooth,
 
     activeNotes: {},
     lastNote: null,
@@ -241,7 +244,15 @@ export const useStore = create<AppState>((set, get) => {
       await midiEngine.connect()
       get().syncMidiState()
       // Initialize LEDs on the freshly selected output.
-      initLed(output())
+      initLed()
+      renderScaleLeds()
+    },
+
+    pairBluetooth: async () => {
+      // iOS: open the system Bluetooth-MIDI sheet, then re-read devices.
+      await midiEngine.presentBlePairing()
+      get().syncMidiState()
+      initLed()
       renderScaleLeds()
     },
 
@@ -263,7 +274,7 @@ export const useStore = create<AppState>((set, get) => {
     selectOutput: (id) => {
       midiEngine.selectOutput(id)
       get().syncMidiState()
-      initLed(output())
+      initLed()
       renderScaleLeds()
     },
 
@@ -309,15 +320,15 @@ export const useStore = create<AppState>((set, get) => {
     toggleLed: () => {
       const next = !get().ledEnabled
       set({ ledEnabled: next })
-      if (!next) allLedsOff(output())
+      if (!next) allLedsOff()
       else {
-        initLed(output())
+        initLed()
         renderScaleLeds()
       }
     },
 
     setLedMode: (m) => {
-      allLedsOff(output())
+      allLedsOff()
       set({ ledMode: m })
       renderScaleLeds()
       renderChordLeds()

@@ -7,6 +7,8 @@ note / scale / chord / FX state.
 
 > React + TypeScript · Web MIDI API · Web Audio + Tone.js · Tailwind CSS · **no backend, no paid APIs**
 
+📘 完整架构 / 模块 / LED 协议 / 决策沉淀 → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
 ## Quick start
 
 ```bash

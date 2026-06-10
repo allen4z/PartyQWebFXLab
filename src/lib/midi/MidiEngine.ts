@@ -1,154 +1,75 @@
+import { Capacitor } from '@capacitor/core'
 import type { MidiConnectionStatus, MidiDevice } from '../types'
+import type { MidiBackend, MidiBackendCallbacks } from './MidiBackend'
+import { WebMidiBackend } from './WebMidiBackend'
+import { NativeMidiBackend } from './NativeMidiBackend'
 
 // ---------------------------------------------------------------------------
-// Thin wrapper around the Web MIDI API. Normalizes devices, routes note on/off
-// to callbacks, and exposes the selected MIDIOutput for LED messages.
-//
-// Everything degrades safely when Web MIDI is unavailable (e.g. Safari/Firefox
-// without the flag) — `status` becomes 'unsupported' and the UI offers the
-// on-screen keyboard instead.
+// MIDI facade. Picks the right backend for the platform and exposes one stable
+// surface to the store + LED layer. On iOS/Android (Capacitor native) it uses
+// the CoreMIDI plugin; everywhere else it uses Web MIDI.
 // ---------------------------------------------------------------------------
 
-const NOTE_ON = 0x90
-const NOTE_OFF = 0x80
-
-export interface MidiEngineCallbacks {
-  onNoteOn?: (note: number, velocity: number) => void
-  onNoteOff?: (note: number) => void
-  onStateChange?: () => void
+function createBackend(): MidiBackend {
+  if (Capacitor.isNativePlatform()) {
+    return new NativeMidiBackend()
+  }
+  return new WebMidiBackend()
 }
 
-/** Detect PartyKeys by device name. Competitor names are ignored. */
-function isPartyKeysName(name: string): boolean {
-  return /party\s*(q|key)/i.test(name)
-}
+class MidiFacade {
+  private backend: MidiBackend = createBackend()
 
-function toDevice(port: MIDIInput | MIDIOutput): MidiDevice {
-  const name = port.name ?? 'Unknown device'
-  return {
-    id: port.id,
-    name,
-    manufacturer: port.manufacturer ?? '',
-    isPartyKeys: isPartyKeysName(name),
+  get kind() {
+    return this.backend.kind
   }
-}
-
-export class MidiEngine {
-  private access: MIDIAccess | null = null
-  private callbacks: MidiEngineCallbacks = {}
-
-  status: MidiConnectionStatus = 'idle'
-  inputs: MidiDevice[] = []
-  outputs: MidiDevice[] = []
-  selectedInputId: string | null = null
-  selectedOutputId: string | null = null
-
-  constructor() {
-    if (typeof navigator === 'undefined' || !('requestMIDIAccess' in navigator)) {
-      this.status = 'unsupported'
-    }
+  get supported() {
+    return this.backend.supported
+  }
+  /** True when running as a native app with the Bluetooth pairing sheet. */
+  get canPairBluetooth() {
+    return this.backend.kind === 'native' && !!this.backend.presentBlePairing
+  }
+  get status(): MidiConnectionStatus {
+    return this.backend.status
+  }
+  get inputs(): MidiDevice[] {
+    return this.backend.inputs
+  }
+  get outputs(): MidiDevice[] {
+    return this.backend.outputs
+  }
+  get selectedInputId(): string | null {
+    return this.backend.selectedInputId
+  }
+  get selectedOutputId(): string | null {
+    return this.backend.selectedOutputId
   }
 
-  get supported(): boolean {
-    return this.status !== 'unsupported'
+  setCallbacks(cb: MidiBackendCallbacks) {
+    this.backend.setCallbacks(cb)
   }
-
-  setCallbacks(cb: MidiEngineCallbacks) {
-    this.callbacks = cb
+  connect() {
+    return this.backend.connect()
   }
-
-  /** Request MIDI access (with SysEx for LED control). */
-  async connect(): Promise<MidiConnectionStatus> {
-    if (!this.supported) return 'unsupported'
-    this.status = 'requesting'
-    this.callbacks.onStateChange?.()
-    try {
-      // sysex:true is required for PartyKeys LED output.
-      this.access = await navigator.requestMIDIAccess({ sysex: true })
-      this.status = 'ready'
-      this.access.onstatechange = () => this.refresh()
-      this.refresh()
-      // Auto-select the PartyKeys device if present.
-      this.autoSelect()
-      return this.status
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[MIDI] access denied / failed', err)
-      this.status = 'denied'
-      this.callbacks.onStateChange?.()
-      return this.status
-    }
-  }
-
-  /** Re-read the device lists from the MIDIAccess object. */
-  private refresh() {
-    if (!this.access) return
-    this.inputs = Array.from(this.access.inputs.values()).map(toDevice)
-    this.outputs = Array.from(this.access.outputs.values()).map(toDevice)
-
-    // Drop selections whose device disappeared.
-    if (this.selectedInputId && !this.inputs.some((d) => d.id === this.selectedInputId)) {
-      this.selectedInputId = null
-    }
-    if (
-      this.selectedOutputId &&
-      !this.outputs.some((d) => d.id === this.selectedOutputId)
-    ) {
-      this.selectedOutputId = null
-    }
-    this.rebindInput()
-    this.callbacks.onStateChange?.()
-  }
-
-  private autoSelect() {
-    if (!this.selectedInputId) {
-      const pq = this.inputs.find((d) => d.isPartyKeys) ?? this.inputs[0]
-      if (pq) this.selectInput(pq.id)
-    }
-    if (!this.selectedOutputId) {
-      const pq = this.outputs.find((d) => d.isPartyKeys) ?? this.outputs[0]
-      if (pq) this.selectOutput(pq.id)
-    }
-  }
-
   selectInput(id: string | null) {
-    this.selectedInputId = id
-    this.rebindInput()
-    this.callbacks.onStateChange?.()
+    this.backend.selectInput(id)
   }
-
   selectOutput(id: string | null) {
-    this.selectedOutputId = id
-    this.callbacks.onStateChange?.()
+    this.backend.selectOutput(id)
   }
-
-  /** Attach our message handler to the selected input only. */
-  private rebindInput() {
-    if (!this.access) return
-    for (const input of this.access.inputs.values()) {
-      input.onmidimessage = input.id === this.selectedInputId ? this.handleMessage : null
-    }
+  /** Raw MIDI bytes to the selected output — the single LED send path. */
+  send(bytes: number[]) {
+    this.backend.send(bytes)
   }
-
-  private handleMessage = (e: MIDIMessageEvent) => {
-    const data = e.data
-    if (!data || data.length < 2) return
-    const status = data[0] & 0xf0
-    const note = data[1]
-    const velocity = data.length > 2 ? data[2] : 0
-
-    if (status === NOTE_ON && velocity > 0) {
-      this.callbacks.onNoteOn?.(note, velocity / 127)
-    } else if (status === NOTE_OFF || (status === NOTE_ON && velocity === 0)) {
-      this.callbacks.onNoteOff?.(note)
-    }
+  hasOutput() {
+    return this.backend.hasOutput()
   }
-
-  getSelectedOutput(): MIDIOutput | null {
-    if (!this.access || !this.selectedOutputId) return null
-    return this.access.outputs.get(this.selectedOutputId) ?? null
+  /** iOS only — present the Bluetooth MIDI pairing sheet. */
+  async presentBlePairing() {
+    await this.backend.presentBlePairing?.()
   }
 }
 
-// Module-level singleton — one MIDI connection per page.
-export const midiEngine = new MidiEngine()
+// Module-level singleton — one MIDI connection per page/app.
+export const midiEngine = new MidiFacade()

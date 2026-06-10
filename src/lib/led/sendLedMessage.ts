@@ -1,5 +1,6 @@
 import type { Rgb } from '../types'
 import { scaleBrightness } from './colors'
+import { midiEngine } from '../midi/MidiEngine'
 
 // ===========================================================================
 //  PartyKeys LED OUTPUT  —  EDIT THIS FILE TO MATCH REAL HARDWARE
@@ -116,9 +117,9 @@ export function buildLedAllOff(): number[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Send a single LED command to the keyboard.
+ * Send a single LED command to the keyboard via the active MIDI backend
+ * (Web MIDI in the browser, native CoreMIDI on iOS — transparent here).
  *
- * @param output     selected MIDI output (null = no device; logs instead)
  * @param note       real MIDI note number (48..83 for PartyKeys)
  * @param color      desired RGB (will be quantized for the 0x71 protocol)
  * @param brightness 0..1 multiplier applied to the color
@@ -129,7 +130,6 @@ export function buildLedAllOff(): number[] {
  * the LED on the beat and delay audio + visuals by the same constant.
  */
 export function sendLedMessage(
-  output: MIDIOutput | null,
   note: number,
   color: Rgb,
   brightness = 1,
@@ -139,59 +139,36 @@ export function sendLedMessage(
   const finalColor = scaleBrightness(color, brightness)
   const bytes = buildLedSysEx(note, keyIndex, finalColor)
 
-  if (!output) {
+  if (!midiEngine.hasOutput()) {
     // Safe fallback: no device selected — surface the intent for debugging.
-    // (Comment out in production if too noisy.)
     // eslint-disable-next-line no-console
     console.debug('[LED] (no output) note=%d rgb=%o b=%s', note, finalColor, brightness)
     return
   }
 
-  try {
-    output.send(bytes)
-    if (duration && duration > 0) {
-      // Auto-off after `duration` ms (turn this single key off).
-      window.setTimeout(() => {
-        try {
-          output.send([...VENDOR_HEADER, 0x71, 0x01, note & 0x7f, 0x00, SYSEX_END])
-        } catch {
-          /* device may have disconnected */
-        }
-      }, duration)
-    }
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[LED] send failed', err)
+  midiEngine.send(bytes)
+  if (duration && duration > 0) {
+    // Auto-off after `duration` ms (turn this single key off).
+    window.setTimeout(() => {
+      midiEngine.send([...VENDOR_HEADER, 0x71, 0x01, note & 0x7f, 0x00, SYSEX_END])
+    }, duration)
   }
 }
 
 /** Convenience: initialize the device (call once after selecting an output). */
-export function initLed(output: MIDIOutput | null): void {
-  if (!output) return
-  try {
-    output.send(buildLedInit())
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[LED] init failed', err)
-  }
+export function initLed(): void {
+  if (!midiEngine.hasOutput()) return
+  midiEngine.send(buildLedInit())
 }
 
 /** Convenience: turn a single key off (used on note-off). */
-export function ledKeyOff(output: MIDIOutput | null, note: number): void {
-  if (!output) return
-  try {
-    output.send([...VENDOR_HEADER, 0x71, 0x01, note & 0x7f, 0x00, SYSEX_END])
-  } catch {
-    /* ignore */
-  }
+export function ledKeyOff(note: number): void {
+  if (!midiEngine.hasOutput()) return
+  midiEngine.send([...VENDOR_HEADER, 0x71, 0x01, note & 0x7f, 0x00, SYSEX_END])
 }
 
 /** Convenience: turn every key off. */
-export function allLedsOff(output: MIDIOutput | null): void {
-  if (!output) return
-  try {
-    output.send(buildLedAllOff())
-  } catch {
-    /* ignore */
-  }
+export function allLedsOff(): void {
+  if (!midiEngine.hasOutput()) return
+  midiEngine.send(buildLedAllOff())
 }
