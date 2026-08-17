@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useStore } from './store'
+import { audioEngine } from './lib/audio/AudioEngine'
+import { allLedsOff } from './lib/led/sendLedMessage'
 import { DevicePanel } from './components/DevicePanel/DevicePanel'
 import { Keyboard } from './components/Keyboard/Keyboard'
 import { SoundPanel } from './components/SoundPanel/SoundPanel'
@@ -117,10 +119,29 @@ export default function App() {
     }
   }, [noteOn, noteOff, startAudio])
 
+  // Page teardown (PopuMusic WebView keeps the BLE link; we only clean up
+  // our own sound and LEDs so the next page starts from a blank slate).
+  useEffect(() => {
+    const cleanup = () => {
+      audioEngine.releaseAll()
+      allLedsOff()
+    }
+    window.addEventListener('pagehide', cleanup)
+    return () => window.removeEventListener('pagehide', cleanup)
+  }, [])
+
   return (
     <>
       <AudioGate />
-      <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+      <div
+        className="mx-auto max-w-[1500px]"
+        style={{
+          paddingTop: 'calc(var(--safe-top, 0px) + 24px)',
+          paddingRight: 'calc(var(--safe-right, 0px) + 24px)',
+          paddingBottom: 'calc(var(--safe-bottom, 0px) + 24px)',
+          paddingLeft: 'calc(var(--safe-left, 0px) + 24px)',
+        }}
+      >
         <Header />
 
         {/* Keyboard takes the spotlight */}
