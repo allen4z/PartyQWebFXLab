@@ -80,3 +80,15 @@ Vite is auto-detected; leave **Root Directory** empty. `vercel.json` adds SPA re
 ```bash
 git add . && git commit -m "PartyKeys Web FX Lab" && git push
 ```
+
+## 部署信息
+
+- 部署环境：生产 · 阿里云华东1（cn-hangzhou）
+- 部署方案：纯静态 OSS + CDN（方案 A）
+- 目标域名：https://fx.popumusic.cn （已验证 200，HTTPS 正常）
+- OSS Bucket：`fx-popumusic-cn`（公共读，静态托管 index.html / 404.html）
+- CDN 加速域名：`fx.popumusic.cn`，源站 `fx-popumusic-cn.oss-cn-hangzhou.aliyuncs.com`（oss，443）
+- DNS：`fx.popumusic.cn` CNAME → `fx.popumusic.cn.w.kunlunaq.com`（阿里云 DNS）
+- 证书：CAS `popumusic-c-popumusic-cn-2026`（CertId 26624284，`*.popumusic.cn`，有效期至 2027-02-20）
+- 构建：`npm run build` → 上传 `dist/` 到 bucket 根目录
+- 注意：部署到 PopuMusic MIDI Browser 前需将 `fx.popumusic.cn` 加入发布清单 Whitelist（cpfile.poputar.com/MidiBrowser/publish.json）
