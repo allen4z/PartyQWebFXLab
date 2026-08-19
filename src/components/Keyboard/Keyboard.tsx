@@ -139,10 +139,10 @@ export function Keyboard() {
         </span>
       </div>
 
-      {/* Keyboard */}
+      {/* Keyboard — keys scale to the container width on any screen */}
       <div
         className="relative w-full touch-none select-none"
-        style={{ height: 180 }}
+        style={{ height: 'clamp(110px, 24vw, 180px)' }}
         onPointerDown={() => (pointerDown.current = true)}
       >
         <Particles ref={particlesRef} />

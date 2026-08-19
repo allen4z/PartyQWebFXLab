@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useStore } from './store'
+import { audioEngine } from './lib/audio/AudioEngine'
+import { allLedsOff } from './lib/led/sendLedMessage'
 import { DevicePanel } from './components/DevicePanel/DevicePanel'
 import { Keyboard } from './components/Keyboard/Keyboard'
 import { SoundPanel } from './components/SoundPanel/SoundPanel'
@@ -7,6 +9,7 @@ import { FxRack } from './components/FxRack/FxRack'
 import { LedPanel } from './components/LedPanel/LedPanel'
 import { AiSoundPrompt } from './components/AiSoundPrompt/AiSoundPrompt'
 import { Logo } from './components/ui/Logo'
+import { BackEntry } from './components/BackEntry/BackEntry'
 
 // QWERTY -> MIDI note (starting at C4 = 60) for keyboard-less demoing.
 const KEY_MAP: Record<string, number> = {
@@ -20,9 +23,10 @@ function Header() {
 
   return (
     <header className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <BackEntry />
         <Logo size={44} />
-        <div>
+        <div className="min-w-0">
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
             PartyKeys <span className="text-gradient">Web FX Lab</span>
           </h1>
@@ -65,7 +69,10 @@ function AudioGate() {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink-900/70 p-6 backdrop-blur-md">
       <div className="glass-strong max-w-md p-8 text-center">
-        <Logo size={64} rounded="rounded-3xl" className="mx-auto mb-5 animate-float" />
+        <div className="mb-5 flex items-center justify-center gap-3">
+          <BackEntry />
+          <Logo size={64} rounded="rounded-3xl" className="animate-float" />
+        </div>
         <h2 className="mb-2 text-2xl font-extrabold">
           PartyKeys <span className="text-gradient">Web FX Lab</span>
         </h2>
@@ -89,6 +96,13 @@ export default function App() {
   const noteOn = useStore((s) => s.noteOn)
   const noteOff = useStore((s) => s.noteOff)
   const startAudio = useStore((s) => s.startAudio)
+  const connectMidi = useStore((s) => s.connectMidi)
+
+  // Auto-detect MIDI devices on load (doc §5.3: every page re-requests access;
+  // the backend auto-selects PartyKeys and rebinds on statechange).
+  useEffect(() => {
+    void connectMidi()
+  }, [connectMidi])
 
   // QWERTY fallback input — lets the app be demoed with no MIDI hardware.
   useEffect(() => {
@@ -117,10 +131,29 @@ export default function App() {
     }
   }, [noteOn, noteOff, startAudio])
 
+  // Page teardown (PopuMusic WebView keeps the BLE link; we only clean up
+  // our own sound and LEDs so the next page starts from a blank slate).
+  useEffect(() => {
+    const cleanup = () => {
+      audioEngine.releaseAll()
+      allLedsOff()
+    }
+    window.addEventListener('pagehide', cleanup)
+    return () => window.removeEventListener('pagehide', cleanup)
+  }, [])
+
   return (
     <>
       <AudioGate />
-      <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+      <div
+        className="mx-auto max-w-[1500px]"
+        style={{
+          paddingTop: 'calc(var(--safe-top, 0px) + 24px)',
+          paddingRight: 'calc(var(--safe-right, 0px) + 24px)',
+          paddingBottom: 'calc(var(--safe-bottom, 0px) + 24px)',
+          paddingLeft: 'calc(var(--safe-left, 0px) + 24px)',
+        }}
+      >
         <Header />
 
         {/* Keyboard takes the spotlight */}
