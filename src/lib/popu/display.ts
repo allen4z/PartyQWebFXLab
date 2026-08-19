@@ -13,6 +13,8 @@ declare global {
     samplerBridge?: { post: (json: string) => void }
     __samplerBridge?: Record<string, unknown>
     __webMIDIBridge?: unknown
+    midiBridge?: unknown
+    midiBrowser?: unknown
   }
 }
 
@@ -23,7 +25,9 @@ export function isPopuWebview(): boolean {
     Boolean(
       window.popuDisplayInfo ||
         window.samplerBridge ||
-        window.__webMIDIBridge,
+        window.__webMIDIBridge ||
+        window.midiBridge ||
+        window.midiBrowser,
     )
   )
 }

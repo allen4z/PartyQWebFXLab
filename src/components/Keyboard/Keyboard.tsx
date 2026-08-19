@@ -139,11 +139,10 @@ export function Keyboard() {
         </span>
       </div>
 
-      {/* Keyboard — scrolls horizontally on phones so keys stay playable */}
-      <div className="overflow-x-auto overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Keyboard — keys scale to the container width on any screen */}
       <div
-        className="relative w-full min-w-[680px] touch-none select-none md:min-w-0"
-        style={{ height: 180 }}
+        className="relative w-full touch-none select-none"
+        style={{ height: 'clamp(110px, 24vw, 180px)' }}
         onPointerDown={() => (pointerDown.current = true)}
       >
         <Particles ref={particlesRef} />
@@ -227,7 +226,6 @@ export function Keyboard() {
               </button>
             )
           })}
-      </div>
       </div>
 
       <p className="mt-3 text-center text-[11px] text-white/35">

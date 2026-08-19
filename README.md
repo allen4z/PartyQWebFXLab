@@ -92,3 +92,13 @@ git add . && git commit -m "PartyKeys Web FX Lab" && git push
 - 证书：CAS `popumusic-c-popumusic-cn-2026`（CertId 26624284，`*.popumusic.cn`，有效期至 2027-02-20）
 - 构建：`npm run build` → 上传 `dist/` 到 bucket 根目录
 - 注意：部署到 PopuMusic MIDI Browser 前需将 `fx.popumusic.cn` 加入发布清单 Whitelist（cpfile.poputar.com/MidiBrowser/publish.json）
+
+### 返回按钮（BackEntry）显示规则与踩坑记录
+
+`src/components/BackEntry/BackEntry.tsx` 在标题行内渲染返回按钮，满足以下任一条件时显示：
+
+1. URL 带 `?popu-back=1`（Portal 入口标记，见接入指南 §8.1）
+2. 运行在 PopuMusic WebView 内（`isPopuWebview()` 检测 `popuDisplayInfo` / `samplerBridge` / `__webMIDIBridge`）
+3. 存在跨域 `document.referrer`
+
+**2026-08 踩坑**：最初只实现了条件 1 和 3。但 App WebView 不提供 `document.referrer`，而 Portal 只给课程/曲库/超级曲库三个入口附加 `popu-back=1`，FX 页面入口没有带——两个条件都不成立，按钮在 App 内从不显示。修复：补充条件 2，在 WebView 内必然显示（用户离开页面的唯一途径就是返回）；点击逻辑改为与 `popumusic-web-collection` 的 `packages/learning-ui/back-entry.js` 一致：`history.length > 1` 则 `history.back()`，否则跳转可解析的跨站 referrer。普通浏览器直接打开仍不显示按钮。

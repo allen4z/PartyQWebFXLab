@@ -76,7 +76,7 @@ export function DevicePanel() {
         <button
           type="button"
           onClick={connectMidi}
-          disabled={status === 'unsupported' || status === 'requesting'}
+          disabled={status === 'requesting'}
           className="btn-brand w-full"
         >
           <span>◈</span>
