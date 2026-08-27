@@ -90,7 +90,10 @@ git add . && git commit -m "PartyKeys Web FX Lab" && git push
 - CDN 加速域名：`fx.popumusic.cn`，源站 `popumusic-web.oss-cn-hangzhou.aliyuncs.com`（oss，443），边缘函数 `back_to_origin_url_rewrite` 将 `^/(.*)$` 重写为 `/apps/fx/$1`（另配 `oss_auth`、`set_req_host_header`）
 - DNS：`fx.popumusic.cn` CNAME → `fx.popumusic.cn.w.kunlunaq.com`（阿里云 DNS）
 - 证书：CAS `popumusic-c-popumusic-cn-2026`（CertId 26624284，`*.popumusic.cn`，有效期至 2027-02-20）
-- 构建：`npm run build` → 上传 `cd dist && aliyun oss cp . oss://popumusic-web/apps/fx/ -r -f`（2026-08-25 已从独立 bucket `fx-popumusic-cn` 迁入，迁移后验证 200）
+- 构建：`npm run build` → 上传（带缓存头，降低 CDN 回源 TTFB）：
+  - `cd dist && aliyun oss cp . oss://popumusic-web/apps/fx/ -r -f --meta Cache-Control:no-cache`（2026-08-25 已从独立 bucket `fx-popumusic-cn` 迁入，迁移后验证 200）
+  - `aliyun oss cp dist/assets oss://popumusic-web/apps/fx/assets -r -f --meta Cache-Control:public,max-age=31536000,immutable`（文件名带 hash，可永久缓存）
+  - 部署后在 CDN 控制台刷新 `/`；并建议为 `*.html` 配 5-10 分钟边缘缓存（实测 TTFB ~940ms，瓶颈在 CDN 每请求执行 3 个边缘函数 + HTML 无边缘缓存）
 - 注意：部署到 PopuMusic MIDI Browser 前需将 `fx.popumusic.cn` 加入发布清单 Whitelist（cpfile.poputar.com/MidiBrowser/publish.json）
 
 ### 返回按钮（BackEntry）显示规则与踩坑记录
