@@ -104,6 +104,11 @@ export default function App() {
     void connectMidi()
   }, [connectMidi])
 
+  // Drop the inline first-paint placeholder once React has committed.
+  useEffect(() => {
+    document.getElementById('boot')?.remove()
+  }, [])
+
   // QWERTY fallback input — lets the app be demoed with no MIDI hardware.
   useEffect(() => {
     const pressed = new Set<string>()
