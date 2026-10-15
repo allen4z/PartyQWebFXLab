@@ -31,7 +31,8 @@ const PANELS: Record<Tab, () => JSX.Element> = {
   ai: AiSoundPrompt,
 }
 
-const MINI_KEYS_HEIGHT = '48px'
+// 48px on a landscape iPhone, up to ~80-110px on an iPad.
+const MINI_KEYS_HEIGHT = 'clamp(48px, 8vh, 120px)'
 
 function NoteChip() {
   const lastNote = useStore((s) => s.lastNote)
