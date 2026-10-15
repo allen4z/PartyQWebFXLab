@@ -226,6 +226,7 @@ export const useStore = create<AppState>((set, get) => {
     startAudio: async () => {
       if (get().audioStarted) return
       await audioEngine.start()
+      if (!audioEngine.isStarted) return // blocked until a user gesture
       const preset = getPreset(get().presetId)
       audioEngine.setPreset(preset, get().adsr)
       audioEngine.updateFx(get().fx)
