@@ -1,8 +1,12 @@
 import { useSyncExternalStore } from 'react'
 
-// Portrait phones by width, landscape phones by height (iPhone landscape is
-// 320-430px tall), so iPads and desktop windows keep the full layout.
-const PHONE = window.matchMedia('(max-width: 767px), (orientation: landscape) and (max-height: 500px)')
+// "Phone" = the touch layout, used on phones AND iPads. Touch devices are
+// matched by a coarse primary pointer (iPad keeps it even with a trackpad
+// attached); the size queries also catch phones in emulators without touch.
+// Desktop (fine pointer, normal window) keeps the full layout.
+const PHONE = window.matchMedia(
+  '(pointer: coarse), (max-width: 767px), (orientation: landscape) and (max-height: 500px)',
+)
 
 const subscribe = (onChange: () => void) => {
   PHONE.addEventListener('change', onChange)
